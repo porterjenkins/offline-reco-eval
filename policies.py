@@ -18,6 +18,18 @@ class BasePolicy(object):
         # implemented by derived class
         pass
 
+
+class DummyPolicy(BasePolicy):
+    """recommend current state (ie, no change)"""
+    def __init__(self):
+        super(DummyPolicy, self).__init__()
+
+
+    def __call__(self, state: DisplayState):
+        return state.get_prod_quantites()
+
+
+
 class RandomPolicy(BasePolicy):
 
     def __init__(self, products: list, range: tuple):
@@ -35,13 +47,6 @@ class RandomPolicy(BasePolicy):
             q = np.random.randint(self.q_min, self.q_max)
             a[p] = q
         return a
-
-
-    def update(self, state: DisplayState,  payoffs: dict):
-        pass
-
-    def reset(self):
-        pass
 
 
 
@@ -89,7 +94,7 @@ class EpsilonGreedy(BasePolicy):
     def update(self, state: DisplayState, payoffs: dict):
         total_payoff = np.sum(list(payoffs.values()))
 
-        state_dict = self.dict_to_str(state.get_prod_quantites())
+        state_dict = self.dict_to_str(state)
 
         if state_dict not in self.qtable:
             self.qtable[state_dict] = 0
