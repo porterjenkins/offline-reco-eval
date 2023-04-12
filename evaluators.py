@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from typing import Optional
 
 class RandomPolicy(object):
 
@@ -23,11 +24,22 @@ class RandomPolicy(object):
 
 class DisplayState(object):
 
-    def __init__(self, prod_quantity: dict, max_slots: int, timestamp: datetime):
+    def __init__(self, prod_quantity: Optional[dict] = None, max_slots: Optional[int] = None, timestamp: Optional[datetime] = None):
         self.max_slots = max_slots
         self.ts = timestamp
-        self.prods = set(prod_quantity.keys())
+        if prod_quantity is not None:
+            self.prods = set(prod_quantity.keys())
         self.quantities = prod_quantity
+
+
+    def set_time(self, ts: datetime):
+        self.ts = ts
+
+    def set_max_slots(self, max_slots: int):
+        self.max_slots = max_slots
+
+    def __str__(self):
+        return str(self.ts) + ": " + str(self.prods)
 
 
 
@@ -47,10 +59,13 @@ class OfflineDisplayPolicyEvaluator(object):
     def get_events(df: pd.DataFrame):
         events = []
         groups = df[['last_scanned_datetime', 'name', 'previous_post_scan_num_facings', 'payoff', 'max_slots']].groupby('last_scanned_datetime')
-        prev_state = None
+        state = DisplayState() # empty state
         i = 0
         for k, v in groups:
-            state = prev_state
+
+            state.set_time(v['last_scanned_datetime'].max())
+            state.set_max_slots(v['max_slots'].max())
+
             action = dict(zip(v['name'], v['previous_post_scan_num_facings']))
             payoff = dict(zip(v['name'], v['payoff']))
             if i > 0:
@@ -59,10 +74,9 @@ class OfflineDisplayPolicyEvaluator(object):
                     {'state': state, 'payoff': payoff, "action": action, "timestamp": k}
                 )
 
-            prev_state = DisplayState(
-                prod_quantity=action,
-                timestamp=v['last_scanned_datetime'].max(),
-                max_slots=v['max_slots'].max()
+            # create new state: state at t+1 is equal to action at t
+            state = DisplayState(
+                prod_quantity=action
             )
             i += 1
 
@@ -136,7 +150,7 @@ class OfflineDisplayPolicyEvaluator(object):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv("./example-display.csv")
+    df = pd.read_csv("./data/example-display.csv")
     df['last_scanned_datetime'] = pd.to_datetime(df['last_scanned_datetime'])
     evaluator = OfflineDisplayPolicyEvaluator(df)
     policy = RandomPolicy(
@@ -149,6 +163,5 @@ if __name__ == "__main__":
     for i in range(n_step):
         a = policy(s)
         r, s, true_payoffs = evaluator.step(a=a)
-        print(s)
         total_reward += r
     print('total: ', total_reward / evaluator.is_valid_cnt)
