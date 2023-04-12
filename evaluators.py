@@ -1,31 +1,10 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime
-from typing import Optional, List
+from typing import List
 from tqdm import tqdm
 
 from policies import RandomPolicy
-
-
-class DisplayState(object):
-
-    def __init__(self, prod_quantity: Optional[dict] = None, max_slots: Optional[int] = None, timestamp: Optional[datetime] = None):
-        self.max_slots = max_slots
-        self.ts = timestamp
-        if prod_quantity is not None:
-            self.prods = set(prod_quantity.keys())
-        self.quantities = prod_quantity
-
-
-    def set_time(self, ts: datetime):
-        self.ts = ts
-
-    def set_max_slots(self, max_slots: int):
-        self.max_slots = max_slots
-
-    def __str__(self):
-        return str(self.ts) + ": " + str(self.prods)
-
+from states import DisplayState
 
 
 class OfflineDisplayPolicyEvaluator(object):
@@ -144,9 +123,16 @@ class OfflineEvaluator(object):
                 s = disp_evaluator.reset()
                 total_reward = 0
                 for k in range(n_step):
+                    if s is None:
+                        continue
                     a = policy(s)
-                    r, s, true_payoffs = disp_evaluator.step(a=a)
+                    r, s_prime, true_payoffs = disp_evaluator.step(a=a)
+                    policy.update(s, true_payoffs)
+                    #print(np.max(list(policy.qcounter.values())))
+                    s = s_prime
                     total_reward += r
+
+                policy.reset()
                 if disp_evaluator.is_valid_cnt > 0:
                     # avoid division by zero
                     total_reward = total_reward / disp_evaluator.is_valid_cnt

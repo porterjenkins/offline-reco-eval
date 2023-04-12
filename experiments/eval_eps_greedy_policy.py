@@ -1,11 +1,12 @@
 import pandas as pd
 
 from evaluators import OfflineEvaluator
-from policies import RandomPolicy
+from policies import EpsilonGreedy
 
 #fpath = "../data/example-display-2.csv"
 fpath = "../data/fall-msd-treatment.csv"
 iter = 100
+eps = 0.1
 df = pd.read_csv(fpath)
 
 evaluator = OfflineEvaluator.build_from_csv(
@@ -13,9 +14,10 @@ evaluator = OfflineEvaluator.build_from_csv(
     iter=iter
 )
 
-policy = RandomPolicy(
+policy = EpsilonGreedy(
     products=list(df['name'].unique()),
-    range=(2, 8)
+    range=(2, 8),
+    eps=eps
 )
 
 evaluator.main(policy=policy)
