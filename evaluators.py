@@ -144,6 +144,8 @@ class OfflineEvaluator(object):
 
         print("global mean: ", np.mean(reward_mtx))
         print("global std: ", np.std(reward_mtx))
+        print("global max: ", np.max(reward_mtx))
+        print("global IQR:", np.quantile(reward_mtx, (0.25, 0.75)))
     @classmethod
     def build_from_csv(cls, fpath: str, iter: int):
         df = pd.read_csv(fpath)
