@@ -134,20 +134,30 @@ class OfflineEvaluator(object):
         self.display_evals = display_eval
         self.num_iter = num_iter
     def main(self, policy):
-        for disp_evaluator in self.display_evals:
-            disp_rewards = []
+        n_disp = len(self.display_evals)
+        print(f"Beginning Eval: {n_disp} Displays")
+        reward_mtx = np.zeros((n_disp, self.num_iter))
+        for i, disp_evaluator in enumerate(self.display_evals):
             print(f"Beginning Display: {disp_evaluator.disp_name}")
-            for i in tqdm(range(self.num_iter)):
+            for j in tqdm(range(self.num_iter)):
                 n_step = len(disp_evaluator)
                 s = disp_evaluator.reset()
                 total_reward = 0
-                for i in range(n_step):
+                for k in range(n_step):
                     a = policy(s)
                     r, s, true_payoffs = disp_evaluator.step(a=a)
                     total_reward += r
-                disp_rewards.append(total_reward / disp_evaluator.is_valid_cnt)
-            print("mean:", np.mean(disp_rewards))
-            print("std", np.std(disp_rewards))
+                if disp_evaluator.is_valid_cnt > 0:
+                    # avoid division by zero
+                    total_reward = total_reward / disp_evaluator.is_valid_cnt
+
+                reward_mtx[i, j] = total_reward
+
+        print("means:", np.mean(reward_mtx, axis=1))
+        print("stds", np.std(reward_mtx, axis=1))
+
+        print("global mean: ", np.mean(reward_mtx))
+        print("global std: ", np.std(reward_mtx))
 
     @classmethod
     def build_from_csv(cls, fpath: str, iter: int):

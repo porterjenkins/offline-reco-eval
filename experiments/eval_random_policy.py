@@ -3,15 +3,15 @@ import pandas as pd
 from evaluators import OfflineEvaluator
 from policies import RandomPolicy
 
-fpath = "../data/example-display-2.csv"
+#fpath = "../data/example-display-2.csv"
+fpath = "../data/fall-msd-treatment.csv"
+iter = 1000
 df = pd.read_csv(fpath)
 
 evaluator = OfflineEvaluator.build_from_csv(
     fpath=fpath,
-    iter=1000
+    iter=iter
 )
-
-
 
 policy = RandomPolicy(
     products=list(df['name'].unique()),
