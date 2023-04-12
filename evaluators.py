@@ -63,7 +63,7 @@ class OfflineDisplayPolicyEvaluator(object):
         )
 
         new_state = self._increment()
-        return reward, new_state, payoff
+        return reward, new_state, payoff, true_action
 
     def _get_reward(self, true_action: dict, action: dict, true_payoffs: dict):
 
@@ -126,16 +126,16 @@ class OfflineEvaluator(object):
                     if s is None:
                         continue
                     a = policy(s)
-                    r, s_prime, true_payoffs = disp_evaluator.step(a=a)
-                    policy.update(s, true_payoffs)
+                    r, s_prime, true_payoffs, true_action = disp_evaluator.step(a=a)
+                    policy.update(true_action, true_payoffs)
                     #print(np.max(list(policy.qcounter.values())))
                     s = s_prime
                     total_reward += r
 
                 policy.reset()
-                if disp_evaluator.is_valid_cnt > 0:
+                """if disp_evaluator.is_valid_cnt > 0:
                     # avoid division by zero
-                    total_reward = total_reward / disp_evaluator.is_valid_cnt
+                    total_reward = total_reward / disp_evaluator.is_valid_cnt"""
 
                 reward_mtx[i, j] = total_reward
 
@@ -144,7 +144,6 @@ class OfflineEvaluator(object):
 
         print("global mean: ", np.mean(reward_mtx))
         print("global std: ", np.std(reward_mtx))
-
     @classmethod
     def build_from_csv(cls, fpath: str, iter: int):
         df = pd.read_csv(fpath)
