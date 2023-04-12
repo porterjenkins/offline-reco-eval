@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from tqdm import tqdm
 
 from policies import RandomPolicy
 
@@ -33,7 +35,8 @@ class OfflineDisplayPolicyEvaluator(object):
     'Unbiased Offline Evaluation of Contextual-bandit-based News Article Recommendation Algorithms
     """
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, disp_name: str, df: pd.DataFrame):
+        self.disp_name = disp_name
         self.events = self.get_events(df)
         self.curr = 0
         self.is_valid_cnt = 0
@@ -124,18 +127,51 @@ class OfflineDisplayPolicyEvaluator(object):
         return self.events[i]
 
 
-    """def __next__(self):
-        self.curr += 1
-        if self.curr < self.max:
-            return self.__getitem__(self.curr)
-        raise StopIteration"""
+class OfflineEvaluator(object):
+
+    def __init__(self, display_eval: List[OfflineDisplayPolicyEvaluator], num_iter:int =10):
+
+        self.display_evals = display_eval
+        self.num_iter = num_iter
+    def main(self, policy):
+        for disp_evaluator in self.display_evals:
+            disp_rewards = []
+            print(f"Beginning Display: {disp_evaluator.disp_name}")
+            for i in tqdm(range(self.num_iter)):
+                n_step = len(disp_evaluator)
+                s = disp_evaluator.reset()
+                total_reward = 0
+                for i in range(n_step):
+                    a = policy(s)
+                    r, s, true_payoffs = disp_evaluator.step(a=a)
+                    total_reward += r
+                disp_rewards.append(total_reward / disp_evaluator.is_valid_cnt)
+            print("mean:", np.mean(disp_rewards))
+            print("std", np.std(disp_rewards))
+
+    @classmethod
+    def build_from_csv(cls, fpath: str, iter: int):
+        df = pd.read_csv(fpath)
+        df['last_scanned_datetime'] = pd.to_datetime(df['last_scanned_datetime'])
+        df.sort_values(by=['display_id', 'last_scanned_datetime'], ascending=False, inplace=True)
+        disp_ids = df['display_id'].unique()
+        disp_evals = []
+        for d_id in disp_ids:
+            disp_data = df[df['display_id'] == d_id]
+            disp_evals.append(
+                OfflineDisplayPolicyEvaluator(disp_name=d_id, df=disp_data)
+            )
+
+        evaluator = OfflineEvaluator(display_eval=disp_evals, num_iter=iter)
+
+        return evaluator
 
 
 
 if __name__ == "__main__":
     df = pd.read_csv("./data/example-display.csv")
     df['last_scanned_datetime'] = pd.to_datetime(df['last_scanned_datetime'])
-    evaluator = OfflineDisplayPolicyEvaluator(df)
+    evaluator = OfflineDisplayPolicyEvaluator(disp_name=df['display_id'].unique()[0], df=df)
     policy = RandomPolicy(
         products=list(df['name'].unique()),
         range=(2, 8)
