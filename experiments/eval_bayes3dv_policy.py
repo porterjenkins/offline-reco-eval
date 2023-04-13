@@ -1,7 +1,7 @@
 import pandas as pd
 
 from evaluators import OfflineEvaluator
-from policy.policies import Bayes3dv
+from policy.bayes_3dv import Bayes3dv
 
 #fpath = "../data/example-display-2.csv"
 fpath = "../data/fall-msd-treatment.csv"
