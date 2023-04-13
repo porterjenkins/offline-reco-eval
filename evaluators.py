@@ -92,6 +92,7 @@ class OfflineDisplayPolicyEvaluator(object):
 
     def reset(self):
         self.curr = 0
+        self.is_valid_cnt = 0
         event = self.__getitem__(self.curr)
         self._increment()
         return event['state']
@@ -133,9 +134,9 @@ class OfflineEvaluator(object):
                     total_reward += r
 
                 policy.reset()
-                """if disp_evaluator.is_valid_cnt > 0:
+                if disp_evaluator.is_valid_cnt > 0:
                     # avoid division by zero
-                    total_reward = total_reward / disp_evaluator.is_valid_cnt"""
+                    total_reward = total_reward / disp_evaluator.is_valid_cnt
 
                 reward_mtx[i, j] = total_reward
 
