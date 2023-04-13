@@ -1,35 +1,77 @@
 import numpy as np
 import pandas as pd
+import os
+import json
 
 from policy.policies import BasePolicy
-from policy.rbp_agent import HeuristicAgent, HeuristicCandidateSearch
+from policy.rbp_agent import HeuristicCandidateSearch
 from states import DisplayState
 
 
 class Bayes3dv(BasePolicy):
 
-    def __init__(self, disp_id, prod_values: dict, prod_std_err: dict, eps: float, alpha: float, num_swap: int):
-        self.disp_id = disp_id
-        self.prod_values = prod_values
-        self.prod_std_err = prod_std_err
+    def __init__(
+            self,
+            rbp_means: dict,
+            rbp_std: dict,
+            adj_list: dict,
+            eps: float,
+            alpha: float,
+            num_swap: int
+    ):
+        super(Bayes3dv, self).__init__()
+        self.rbp_means = rbp_means
+        self.rbp_std = rbp_std
         self.eps = eps
         self.alpha = alpha
         self.num_swap = num_swap
+        self.adj_list = adj_list
 
 
     @classmethod
-    def build_from_csv(cls, rbp_data_fpath: str, event_data_fpath: str):
+    def build_from_dir(cls, data_dir: str, event_data_fpath, eps: float, alpha:float, num_swap: int):
+        rbp_data_fpath = os.path.join(data_dir, "bigquery_rbp_run.csv")
+        adj_fpath = os.path.join(data_dir, "adj_list.json")
+
         rbp = pd.read_csv(rbp_data_fpath)
         dta = pd.read_csv(event_data_fpath)
 
-        joined = pd.merge(dta, rbp, on=['store_id', 'product_id'], how='left')
+        with open(adj_fpath, "r") as f:
+            adj = json.load(f)
+
+        joined = pd.merge(dta, rbp, on=['store_id', 'product_id'], how='inner')
+        print(f"Transactions dropped: {dta.shape[0] - joined.shape[0]}")
+
+        rbps = joined[['display_id', 'name', 'posterior_mean', 'posterior_std']].groupby(
+            ['display_id', 'name']).max().reset_index()
+
+        rbp_means = {}
+        rbp_stds = {}
+
+        for disp, vals in rbps.groupby("display_id"):
+            rbp_means[disp] = dict(zip(vals['name'], vals['posterior_mean']))
+            rbp_stds[disp] = dict(zip(vals['name'], vals['posterior_std']))
+
+        b3dv_policy = Bayes3dv(
+            rbp_means=rbp_means,
+            rbp_std=rbp_stds,
+            adj_list=adj,
+            eps=eps,
+            alpha=alpha,
+            num_swap=num_swap
+
+        )
+
+        return b3dv_policy
 
 
 
     def __call__(self, state: DisplayState):
+        disp_id = state.disp_id
         a = self.select_action(
             state=state.get_prod_quantites(),
             max_slots=state.max_slots,
+
         )
         return a
 

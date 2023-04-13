@@ -5,9 +5,11 @@ from policy.bayes_3dv import Bayes3dv
 
 #fpath = "../data/example-display-2.csv"
 fpath = "../data/fall-msd-treatment.csv"
-rbp_data_fpath = "../data/bigquery_rbp_run.csv"
+
 iter = 100
-eps = 0.1
+eps = 0.0
+alpha = 0.1
+num_swap = 2
 df = pd.read_csv(fpath)
 
 evaluator = OfflineEvaluator.build_from_csv(
@@ -15,9 +17,12 @@ evaluator = OfflineEvaluator.build_from_csv(
     iter=iter
 )
 
-policy = Bayes3dv.build_from_csv(
+policy = Bayes3dv.build_from_dir(
+    data_dir="../data",
     event_data_fpath=fpath,
-    rbp_data_fpath=rbp_data_fpath
+    eps=eps,
+    alpha=alpha,
+    num_swap=num_swap
 )
 
 evaluator.main(policy=policy)

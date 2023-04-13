@@ -7,7 +7,7 @@ from states import DisplayState
 
 class BasePolicy(object):
 
-    def __init__(self, products: list):
+    def __init__(self, products: Optional[list] = None):
         self.n_min, self.n_max = 1, 10
         self.q_min, self.q_max = 2, 8
         self.products = products
