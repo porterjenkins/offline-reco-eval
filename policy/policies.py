@@ -112,10 +112,11 @@ class EpsilonGreedy(BasePolicy):
 
 class DynamicProgramming(BasePolicy):
 
-    def __init__(self, products: list):
+    def __init__(self, products: list, max_weight: int = 5):
         super(DynamicProgramming, self).__init__(products=products)
         self.qtable = {}
         self.qcounter = {}
+        self.max_weight = max_weight
 
     def reset(self):
         self.qtable = {}
@@ -135,15 +136,28 @@ class DynamicProgramming(BasePolicy):
 
 
     def __call__(self, state: DisplayState):
-
+        budget = state.max_slots
         if self.qtable:
             qvals = {}
             for k, v in self.qtable.items():
                 qvals[k] = v / self.qcounter[k]
 
             q_sorted = {k: v for k, v in sorted(qvals.items(), key=lambda item: item[1], reverse=True)}
-            product = list(q_sorted.keys())[0]
-            a = {product: state.max_slots}
+            a = {}
+            for prod, val in q_sorted.items():
+                if budget <= 0:
+                    break
+
+                if budget < self.max_weight:
+                    a[prod] = budget
+                    budget -= self.max_weight
+                else:
+                    a[prod] = self.max_weight
+                    budget -= self.max_weight
+
+
+            #product = list(q_sorted.keys())[0]
+            #a = {product: state.max_slots}
         else:
             a = self.get_random_action()
 
