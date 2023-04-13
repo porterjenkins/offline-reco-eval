@@ -16,15 +16,15 @@ class OfflineDisplayPolicyEvaluator(object):
 
     def __init__(self, disp_name: str, df: pd.DataFrame):
         self.disp_name = disp_name
-        self.events = self.get_events(df)
+        self.events = self.get_events(df, disp_name)
         self.curr = 0
         self.is_valid_cnt = 0
 
     @staticmethod
-    def get_events(df: pd.DataFrame):
+    def get_events(df: pd.DataFrame, disp_id: str):
         events = []
         groups = df[['last_scanned_datetime', 'name', 'previous_post_scan_num_facings', 'payoff', 'max_slots']].groupby('last_scanned_datetime')
-        state = DisplayState() # empty state
+        state = DisplayState(disp_id=disp_id) # empty state
         i = 0
         for k, v in groups:
 
@@ -41,6 +41,7 @@ class OfflineDisplayPolicyEvaluator(object):
 
             # create new state: state at t+1 is equal to action at t
             state = DisplayState(
+                disp_id=disp_id,
                 prod_quantity=action
             )
             i += 1
