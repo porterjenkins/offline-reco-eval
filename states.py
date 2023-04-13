@@ -4,7 +4,8 @@ from typing import Optional
 
 class DisplayState(object):
 
-    def __init__(self, prod_quantity: Optional[dict] = None, max_slots: Optional[int] = None, timestamp: Optional[datetime] = None):
+    def __init__(self, disp_id: str, prod_quantity: Optional[dict] = None, max_slots: Optional[int] = None, timestamp: Optional[datetime] = None):
+        self.disp_id = disp_id
         self.max_slots = max_slots
         self.ts = timestamp
         if prod_quantity is not None:
