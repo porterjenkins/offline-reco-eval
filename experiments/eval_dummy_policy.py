@@ -1,7 +1,7 @@
 import pandas as pd
 
 from evaluators import OfflineEvaluator
-from policies import DummyPolicy
+from policy.policies import DummyPolicy
 
 #fpath = "../data/example-display-2.csv"
 fpath = "../data/fall-msd-treatment.csv"

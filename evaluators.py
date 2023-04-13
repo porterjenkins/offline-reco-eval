@@ -3,7 +3,7 @@ import numpy as np
 from typing import List
 from tqdm import tqdm
 
-from policies import RandomPolicy
+from policy.policies import RandomPolicy
 from states import DisplayState
 
 
