@@ -76,7 +76,7 @@ class RandomPolicy(BasePolicy):
 class EpsilonGreedy(BasePolicy):
 
     def __init__(self, products: list, eps: float):
-        super(BasePolicy, self).__init__(products=products)
+        super(EpsilonGreedy, self).__init__(products=products)
 
         self.eps = eps
 
@@ -84,6 +84,19 @@ class EpsilonGreedy(BasePolicy):
     @staticmethod
     def dict_to_str(d: dict):
         return json.dumps(d, sort_keys=True)
+
+    def update(self, state: DisplayState, payoffs: dict):
+        total_payoff = np.sum(list(payoffs.values()))
+
+        state_dict = self.dict_to_str(state)
+
+        if state_dict not in self.qtable:
+            self.qtable[state_dict] = 0
+        self.qtable[state_dict] += total_payoff
+
+        if state_dict not in self.qcounter:
+            self.qcounter[state_dict] = 0
+        self.qcounter[state_dict] += 1
 
     def __call__(self, state: DisplayState):
 
