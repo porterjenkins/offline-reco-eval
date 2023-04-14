@@ -168,7 +168,7 @@ class LinearProgramming(BasePolicy):
     def __call__(self, state: DisplayState):
 
         # coeff vector
-        coef = self.lin_prog_coeff
+        coef = -1*self.lin_prog_coeff
         # equality constraints: facings sum to max_slots
         A_eq = np.ones(self.n_products).reshape(1, -1)
         b_eq = np.array([state.max_slots])
@@ -180,8 +180,9 @@ class LinearProgramming(BasePolicy):
         bounds = [[0, state.max_slots] for i in range(self.n_products)]
 
         res = linprog(coef, A_eq=A_eq, b_eq=b_eq, A_ub=A_iq, b_ub=b_iq, bounds=bounds)
+        x_star = res.x
         a = {}
-        for i, x_i in enumerate(res.x):
+        for i, x_i in enumerate(x_star):
             if x_i > 0:
                 a[self.idx_to_p[i]] = x_i
 
