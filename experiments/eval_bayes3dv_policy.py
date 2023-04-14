@@ -8,7 +8,7 @@ fpath = "../data/fall-msd-treatment.csv"
 
 iter = 100
 eps = 0.0
-alpha = 0.1
+alpha = 0.05
 num_swap = 2
 df = pd.read_csv(fpath)
 

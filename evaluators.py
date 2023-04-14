@@ -23,7 +23,7 @@ class OfflineDisplayPolicyEvaluator(object):
     @staticmethod
     def get_events(df: pd.DataFrame, disp_id: str):
         events = []
-        groups = df[['last_scanned_datetime', 'name', 'previous_post_scan_num_facings', 'payoff', 'max_slots']].groupby('last_scanned_datetime')
+        groups = df[['last_scanned_datetime', 'product_id', 'previous_post_scan_num_facings', 'payoff', 'max_slots']].groupby('last_scanned_datetime')
         state = DisplayState(disp_id=disp_id) # empty state
         i = 0
         for k, v in groups:
@@ -31,8 +31,8 @@ class OfflineDisplayPolicyEvaluator(object):
             state.set_time(v['last_scanned_datetime'].max())
             state.set_max_slots(v['max_slots'].max())
 
-            action = dict(zip(v['name'], v['previous_post_scan_num_facings']))
-            payoff = dict(zip(v['name'], v['payoff']))
+            action = dict(zip(v['product_id'], v['previous_post_scan_num_facings']))
+            payoff = dict(zip(v['product_id'], v['payoff']))
             if i > 0:
                 # skip initial action (no prev state available)
                 events.append(
