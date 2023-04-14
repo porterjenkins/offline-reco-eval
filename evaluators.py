@@ -14,19 +14,22 @@ class OfflineDisplayPolicyEvaluator(object):
     'Unbiased Offline Evaluation of Contextual-bandit-based News Article Recommendation Algorithms
     """
 
-    def __init__(self, disp_name: str, df: pd.DataFrame):
+    def __init__(self, disp_name: str, df: pd.DataFrame, thin: float):
         self.disp_name = disp_name
-        self.events = self.get_events(df, disp_name)
+        self.events = self.get_events(df, disp_name, thin)
         self.curr = 0
         self.is_valid_cnt = 0
 
     @staticmethod
-    def get_events(df: pd.DataFrame, disp_id: str):
+    def get_events(df: pd.DataFrame, disp_id: str, thin: float):
         events = []
         groups = df[['last_scanned_datetime', 'product_id', 'previous_post_scan_num_facings', 'payoff', 'max_slots']].groupby('last_scanned_datetime')
         state = DisplayState(disp_id=disp_id) # empty state
         i = 0
         for k, v in groups:
+
+            if np.random.random() < thin:
+                continue
 
             state.set_time(v['last_scanned_datetime'].max())
             state.set_max_slots(v['max_slots'].max())
@@ -151,7 +154,7 @@ class OfflineEvaluator(object):
         print("global IQR: {:.3f}, {:.3f}".format(iqr1, iqr2))
 
     @classmethod
-    def build_from_csv(cls, fpath: str, iter: int):
+    def build_from_csv(cls, fpath: str, iter: int, thin: float):
         df = pd.read_csv(fpath)
         df['last_scanned_datetime'] = pd.to_datetime(df['last_scanned_datetime'])
         df.sort_values(by=['display_id', 'last_scanned_datetime'], ascending=False, inplace=True)
@@ -160,7 +163,7 @@ class OfflineEvaluator(object):
         for d_id in disp_ids:
             disp_data = df[df['display_id'] == d_id]
             disp_evals.append(
-                OfflineDisplayPolicyEvaluator(disp_name=d_id, df=disp_data)
+                OfflineDisplayPolicyEvaluator(disp_name=d_id, df=disp_data, thin=thin)
             )
 
         evaluator = OfflineEvaluator(display_eval=disp_evals, num_iter=iter)

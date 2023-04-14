@@ -14,7 +14,7 @@ class Bayes3dv(BasePolicy):
 
     def __init__(
             self,
-            rbp_means: dict,
+            rbp_vals: dict,
             rbp_std: dict,
             adj_list: dict,
             eps: float,
@@ -23,7 +23,7 @@ class Bayes3dv(BasePolicy):
             products: list
     ):
         super(Bayes3dv, self).__init__(products)
-        self.rbp_vals = rbp_means
+        self.rbp_vals = rbp_vals
         self.rbp_std = rbp_std
         self.eps = eps
         self.alpha = alpha
@@ -35,6 +35,7 @@ class Bayes3dv(BasePolicy):
     def build_from_dir(cls, data_dir: str, event_data_fpath, eps: float, alpha:float, num_swap: int):
         rbp_data_fpath = os.path.join(data_dir, "bigquery_rbp_run.csv")
         adj_fpath = os.path.join(data_dir, "adj_list.json")
+        lmbda = 1.0
 
         rbp = pd.read_csv(rbp_data_fpath)
         dta = pd.read_csv(event_data_fpath)
@@ -48,15 +49,17 @@ class Bayes3dv(BasePolicy):
         rbps = joined[['display_id', 'product_id', 'posterior_mean', 'posterior_std']].groupby(
             ['display_id', 'product_id']).max().reset_index()
 
-        rbp_means = {}
+        rbp_vals = {}
         rbp_stds = {}
 
         for disp, vals in rbps.groupby("display_id"):
-            rbp_means[disp] = dict(zip(vals['product_id'], vals['posterior_mean']))
+            #rbp_vals[disp] = dict(zip(vals['product_id'], vals['posterior_mean']))
             rbp_stds[disp] = dict(zip(vals['product_id'], vals['posterior_std']))
+            penalized = vals['posterior_mean'] - lmbda*vals['posterior_std']
+            rbp_vals[disp] = dict(zip(vals['product_id'], penalized))
 
         b3dv_policy = Bayes3dv(
-            rbp_means=rbp_means,
+            rbp_vals=rbp_vals,
             rbp_std=rbp_stds,
             adj_list=adj,
             eps=eps,

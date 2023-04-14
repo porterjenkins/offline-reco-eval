@@ -7,12 +7,14 @@ from policy.policies import DynamicProgramming
 fpath = "../data/fall-msd-control.csv"
 iter = 100
 eps = 0.1
-max_w = 8
+max_w = 5
+event_thin = 0.5
 df = pd.read_csv(fpath)
 
 evaluator = OfflineEvaluator.build_from_csv(
     fpath=fpath,
-    iter=iter
+    iter=iter,
+    thin=event_thin
 )
 
 policy = DynamicProgramming(

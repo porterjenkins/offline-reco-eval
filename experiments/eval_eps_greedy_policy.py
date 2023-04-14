@@ -7,11 +7,13 @@ from policy.policies import EpsilonGreedy
 fpath = "../data/fall-msd-control.csv"
 iter = 100
 eps = 0.1
+event_thin = 0.5
 df = pd.read_csv(fpath)
 
 evaluator = OfflineEvaluator.build_from_csv(
     fpath=fpath,
-    iter=iter
+    iter=iter,
+    thin=event_thin
 )
 
 policy = EpsilonGreedy(
