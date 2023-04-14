@@ -4,10 +4,10 @@ from evaluators import OfflineEvaluator
 from policy.bayes_3dv import Bayes3dv
 
 #fpath = "../data/example-display-2.csv"
-fpath = "../data/fall-msd-treatment.csv"
+fpath = "../data/fall-msd-control.csv"
 
 iter = 100
-eps = 0.0
+eps = 0.00
 alpha = 0.05
 num_swap = 2
 df = pd.read_csv(fpath)

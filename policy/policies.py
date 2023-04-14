@@ -11,7 +11,7 @@ class BasePolicy(object):
 
     def __init__(self, products: Optional[list] = None):
         self.n_min, self.n_max = 1, 10
-        self.q_min, self.q_max = 2, 8
+        self.q_min, self.q_max = 0, 8
         self.products = products
         self.qtable = {}
         self.qcounter = {}
@@ -26,13 +26,16 @@ class BasePolicy(object):
         self.qtable = {}
         self.qcounter = {}
 
-    def get_random_action(self):
-        n_prod = np.random.randint(self.n_min, self.n_max)
-        prods = np.random.choice(self.products, size=n_prod)
+    def get_random_action(self, max_slots):
+
+        budget = max_slots
         a = {}
-        for p in prods:
-            q = np.random.randint(self.q_min, self.q_max)
-            a[p] = q
+        while budget > 0:
+            p = np.random.choice(self.products, size=1)[0]
+            q = np.random.randint(self.q_min, min(self.q_max, budget)+1)
+            a[p] = a
+            budget -= q
+
         return a
 
     def update(self, action: dict, payoffs: dict):
@@ -61,14 +64,12 @@ class DummyPolicy(BasePolicy):
 
 class RandomPolicy(BasePolicy):
 
-    def __init__(self, products: list, range: tuple):
+    def __init__(self, products: list):
         super(RandomPolicy, self).__init__(products=products)
-        self.q_min, self.q_max = range
-        self.n_min, self.n_max = 1, 10
 
 
     def __call__(self, state):
-        a = self.get_random_action()
+        a = self.get_random_action(state.max_slots)
         return a
 
 
@@ -110,7 +111,7 @@ class EpsilonGreedy(BasePolicy):
             q_sorted = {k: v for k, v in sorted(qvals.items(), key=lambda item: item[1], reverse=True)}
             a = json.loads(list(q_sorted.keys())[0])
         else:
-            a = self.get_random_action()
+            a = self.get_random_action(state.max_slots)
 
         return a
 
@@ -152,7 +153,7 @@ class DynamicProgramming(BasePolicy):
             #product = list(q_sorted.keys())[0]
             #a = {product: state.max_slots}
         else:
-            a = self.get_random_action()
+            a = self.get_random_action(state.max_slots)
 
         return a
 
@@ -191,8 +192,10 @@ class LinearProgramming(BasePolicy):
 
         # bounds on variables
         bounds = [[0, state.max_slots] for i in range(self.n_products)]
-
-        res = linprog(coef, A_eq=A_eq, b_eq=b_eq, A_ub=A_iq, b_ub=b_iq, bounds=bounds)
+        try:
+            res = linprog(coef, A_eq=A_eq, b_eq=b_eq, A_ub=A_iq, b_ub=b_iq, bounds=bounds)
+        except ValueError:
+            stop = 0
         x_star = res.x
         a = {}
         for i, x_i in enumerate(x_star):

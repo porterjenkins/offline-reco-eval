@@ -19,9 +19,10 @@ class Bayes3dv(BasePolicy):
             adj_list: dict,
             eps: float,
             alpha: float,
-            num_swap: int
+            num_swap: int,
+            products: list
     ):
-        super(Bayes3dv, self).__init__()
+        super(Bayes3dv, self).__init__(products)
         self.rbp_vals = rbp_means
         self.rbp_std = rbp_std
         self.eps = eps
@@ -60,8 +61,8 @@ class Bayes3dv(BasePolicy):
             adj_list=adj,
             eps=eps,
             alpha=alpha,
-            num_swap=num_swap
-
+            num_swap=num_swap,
+            products=list(dta['name'].unique())
         )
 
         return b3dv_policy
@@ -88,16 +89,19 @@ class Bayes3dv(BasePolicy):
 
     def __call__(self, state: DisplayState):
         disp_id = state.disp_id
-        cand_set = self._generate_candidates(state.get_prod_quantites())
-        a = self.select_action(
-            state=state.get_prod_quantites(),
-            max_slots=state.max_slots,
-            vals = self.rbp_vals[disp_id],
-            eps=self.eps,
-            alpha=self.alpha,
-            num_swap=self.num_swap,
-            cands=cand_set
-        )
+        if disp_id in self.rbp_vals:
+            cand_set = self._generate_candidates(state.get_prod_quantites())
+            a = self.select_action(
+                state=state.get_prod_quantites(),
+                max_slots=state.max_slots,
+                vals = self.rbp_vals[disp_id],
+                eps=self.eps,
+                alpha=self.alpha,
+                num_swap=self.num_swap,
+                cands=cand_set
+            )
+        else:
+            a = self.get_random_action(state.max_slots)
         return a
 
 
