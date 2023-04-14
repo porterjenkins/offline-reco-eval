@@ -2,6 +2,8 @@ import numpy as np
 import json
 from typing import Optional, List
 
+from scipy.optimize import linprog
+
 from states import DisplayState
 
 
@@ -11,19 +13,18 @@ class BasePolicy(object):
         self.n_min, self.n_max = 1, 10
         self.q_min, self.q_max = 2, 8
         self.products = products
+        self.qtable = {}
+        self.qcounter = {}
 
 
     def __call__(self, state: DisplayState):
         # implement by derived class
         pass
 
-    def reset(self):
-        # implemented by derived class
-        pass
 
-    def update(self, action: dict, payoffs: dict):
-        # implemented by derived class
-        pass
+    def reset(self):
+        self.qtable = {}
+        self.qcounter = {}
 
     def get_random_action(self):
         n_prod = np.random.randint(self.n_min, self.n_max)
@@ -33,6 +34,18 @@ class BasePolicy(object):
             q = np.random.randint(self.q_min, self.q_max)
             a[p] = q
         return a
+
+    def update(self, action: dict, payoffs: dict):
+
+        for prod, rew in payoffs.items():
+            if prod not in self.qtable:
+                self.qtable[prod] = 0
+            self.qtable[prod] += rew
+
+            if prod not in self.qcounter:
+                self.qcounter[prod] = 0
+
+            self.qcounter[prod] += 1
 
 
 class DummyPolicy(BasePolicy):
@@ -66,8 +79,6 @@ class EpsilonGreedy(BasePolicy):
         super(BasePolicy, self).__init__(products=products)
 
         self.eps = eps
-        self.qtable = {}
-        self.qcounter = {}
 
 
     @staticmethod
@@ -90,23 +101,8 @@ class EpsilonGreedy(BasePolicy):
 
         return a
 
-    def update(self, action: dict, payoffs: dict):
-        total_payoff = np.sum(list(payoffs.values()))
-
-        state_dict = self.dict_to_str(action)
-
-        if state_dict not in self.qtable:
-            self.qtable[state_dict] = 0
-        self.qtable[state_dict] += total_payoff
-
-        if state_dict not in self.qcounter:
-            self.qcounter[state_dict] = 0
-        self.qcounter[state_dict] += 1
 
 
-    def reset(self):
-        self.qtable = {}
-        self.qcounter = {}
 
 
 
@@ -117,22 +113,6 @@ class DynamicProgramming(BasePolicy):
         self.qtable = {}
         self.qcounter = {}
         self.max_weight = max_weight
-
-    def reset(self):
-        self.qtable = {}
-        self.qcounter = {}
-
-    def update(self, state: DisplayState, payoffs: dict):
-
-        for prod, rew in payoffs.items():
-            if prod not in self.qtable:
-                self.qtable[prod] = 0
-            self.qtable[prod] += rew
-
-            if prod not in self.qcounter:
-                self.qcounter[prod] = 0
-
-            self.qcounter[prod] += 1
 
 
     def __call__(self, state: DisplayState):
@@ -163,4 +143,47 @@ class DynamicProgramming(BasePolicy):
 
         return a
 
+
+class LinearProgramming(BasePolicy):
+
+    def __init__(self, products: list, max_weight: int):
+        super(LinearProgramming, self).__init__(products=products)
+        self.n_products = len(products)
+        self.p_to_idx = dict(zip(products, range(self.n_products)))
+        self.idx_to_p = dict(zip(range(self.n_products), products))
+        self.lin_prog_coeff = np.zeros(self.n_products)
+        self.max_weight = max_weight
+
+
+    def reset(self):
+        BasePolicy.reset(self)
+        self.lin_prog_coeff = np.zeros(self.n_products)
+
+    def update(self, action: dict, payoffs: dict):
+        BasePolicy.update(self, action, payoffs)
+        for k, v in self.qtable.items():
+            idx = self.p_to_idx[k]
+            c = self.qtable[k] / self.qcounter[k]
+            self.lin_prog_coeff[idx] = c
+    def __call__(self, state: DisplayState):
+
+        # coeff vector
+        coef = self.lin_prog_coeff
+        # equality constraints: facings sum to max_slots
+        A_eq = np.ones(self.n_products).reshape(1, -1)
+        b_eq = np.array([state.max_slots])
+        # inequality constraints
+        A_iq = np.eye(self.n_products)
+        b_iq = np.ones(self.n_products) * self.max_weight
+
+        # bounds on variables
+        bounds = [[0, state.max_slots] for i in range(self.n_products)]
+
+        res = linprog(coef, A_eq=A_eq, b_eq=b_eq, A_ub=A_iq, b_ub=b_iq, bounds=bounds)
+        a = {}
+        for i, x_i in enumerate(res.x):
+            if x_i > 0:
+                a[self.idx_to_p[i]] = x_i
+
+        return a
 
