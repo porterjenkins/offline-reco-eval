@@ -73,6 +73,85 @@ class RandomPolicy(BasePolicy):
         return a
 
 
+class GeneticPolicy(BasePolicy):
+
+    def __init__(self, products: list, marriage_rate: float):
+        super(GeneticPolicy, self).__init__(products=products)
+        self.marriage_rate = marriage_rate
+
+    def reset(self):
+        pass
+
+    @staticmethod
+    def dict_to_str(d: dict):
+        return json.dumps(d, sort_keys=True)
+
+    def update(self, state: DisplayState, payoffs: dict):
+        total_payoff = np.sum(list(payoffs.values()))
+
+        state_dict = self.dict_to_str(state)
+
+        if state_dict not in self.qtable:
+            self.qtable[state_dict] = 0
+        self.qtable[state_dict] += total_payoff
+
+        if state_dict not in self.qcounter:
+            self.qcounter[state_dict] = 0
+        self.qcounter[state_dict] += 1
+
+    def marry_partners(self, original_partner, partner_2):
+        #Sort Alphabetically
+        original_partner = {k: v for k, v in sorted(original_partner.items(), key=lambda item: item[0])}
+        partner_2 = {k: v for k, v in sorted(partner_2.items(), key=lambda item: item[0])}
+
+        #Convert to lists
+        original_partner_list = []
+        for k, v in original_partner.items():
+            for _ in range(int(v)):
+                original_partner_list.append(k)
+
+        partner_2_list = []
+        for k, v in partner_2.items():
+            for _ in range(int(v)):
+                partner_2_list.append(k)
+        
+        
+
+        splice_point = round(np.random.random() * (len(original_partner_list)))
+
+        if splice_point < len(original_partner_list):
+            for i in range(splice_point, min(len(original_partner_list), len(partner_2_list))):
+                original_partner_list[i] = partner_2_list[i]
+
+        # Convert to dict
+        child_dict = {}
+        for id in original_partner_list:
+            if id in child_dict:
+                child_dict[id] += 1
+            else:
+                child_dict[id] = 1
+
+        return child_dict
+
+    def __call__(self, state: DisplayState):
+        alpha = np.random.random()
+        if self.qtable and alpha < self.marriage_rate:
+            qvals = {}
+            for k, v in self.qtable.items():
+                qvals[k] = v / self.qcounter[k]
+
+            q_sorted = {k: v for k, v in sorted(qvals.items(), key=lambda item: item[1], reverse=True)}
+
+            partner_1 = state.quantities
+            partner_2 = json.loads(list(q_sorted.keys())[0])
+
+            # print("MARRIAGE")
+            a = self.marry_partners(partner_1, partner_2)
+        else:
+            # print("MUTATION")
+            a = self.get_random_action(state.max_slots)
+
+        return a
 
 class EpsilonGreedy(BasePolicy):
 
