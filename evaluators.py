@@ -1,12 +1,12 @@
 import pandas as pd
 import numpy as np
-from typing import List
+from typing import List, Optional
 from tqdm import tqdm
 
 from policy.policies import RandomPolicy
 from states import DisplayState
 
-
+#np.random.seed(1990)
 class OfflineDisplayPolicyEvaluator(object):
 
     """
@@ -113,7 +113,7 @@ class OfflineDisplayPolicyEvaluator(object):
 
 class OfflineEvaluator(object):
 
-    def __init__(self, display_eval: List[OfflineDisplayPolicyEvaluator], num_iter:int =10):
+    def __init__(self, display_eval: List[OfflineDisplayPolicyEvaluator], num_iter: int =10):
 
         self.display_evals = display_eval
         self.num_iter = num_iter
@@ -150,11 +150,11 @@ class OfflineEvaluator(object):
         print("global mean: {:.3f}".format(np.mean(reward_mtx)))
         print("global std: {:.3f}".format(np.std(reward_mtx)))
         print("global max: {:.3f}".format(np.max(reward_mtx)))
-        iqr1, iqr2 = np.quantile(reward_mtx, (0.25, 0.75))
-        print("global IQR: {:.3f}, {:.3f}".format(iqr1, iqr2))
+        iqr_low, median, iqr_high = np.quantile(reward_mtx, (0.25, 0.5, 0.75))
+        print("global IQR: {:.3f}, {:.3f}, {:.3f}".format(iqr_low, median, iqr_high))
 
     @classmethod
-    def build_from_csv(cls, fpath: str, iter: int, thin: float):
+    def build_from_csv(cls, fpath: str, iter: int, thin: Optional[float] = 0.0):
         df = pd.read_csv(fpath)
         df['last_scanned_datetime'] = pd.to_datetime(df['last_scanned_datetime'])
         df.sort_values(by=['display_id', 'last_scanned_datetime'], ascending=False, inplace=True)
