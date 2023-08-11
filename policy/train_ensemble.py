@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+import json
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
@@ -32,11 +32,16 @@ x_values = np.concatenate([facing_feats, prod_feats, day_feats], axis=-1)
 y_values = dta['payoff'].values.reshape(-1, 1)
 y_values = scaler.fit_transform(y_values)
 
-with open("../models/gaussian-dnn-one-hot.pickle", "wb") as f:
+with open("../models/ensemble/gaussian-dnn-one-hot.pickle", "wb") as f:
     pickle.dump(one_hot_prod, f)
 
-with open("../models/gaussian-dnn-scaler.pickle", "wb") as f:
-    pickle.dump(one_hot_prod, f)
+with open("../models/ensemble/gaussian-dnn-scaler.pickle", "wb") as f:
+    pickle.dump(scaler, f)
+
+metadata = {"num_feats": int(x_values.shape[1])}
+
+with open("../models/ensemble/metadata.json", "w") as f:
+    json.dump(metadata, f)
 
 # Convert data to PyTorch tensors
 x_tensor = torch.tensor(x_values, dtype=torch.float32).unsqueeze(1)
@@ -53,6 +58,8 @@ val_loader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
 device = torch.device("cpu")
 
+
+
 # Instantiate and train the Gaussian DNN model
 
 num_epochs = 20
@@ -66,6 +73,6 @@ for i in range(5):
         val_loss = evaluate_gaussian_dnn(val_loader, gaussian_dnn_model, device)
 
         progress_bar.set_postfix({"Train Loss": f"{train_loss:.2f}", "Val Loss": f"{val_loss:.2f}"})
-        torch.save(gaussian_dnn_model.state_dict(), f"../models/gauss-dnn-{i}.pt")
+        torch.save(gaussian_dnn_model.state_dict(), f"../models/ensemble/gauss-dnn-{i}.pt")
 
 

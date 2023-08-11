@@ -25,3 +25,6 @@ class DisplayState(object):
 
     def __str__(self):
         return str(self.ts) + ": " + str(self.prods)
+
+    def __len__(self):
+        return len(self.prods)
