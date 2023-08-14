@@ -102,7 +102,7 @@ class OfflineDisplayPolicyEvaluator(object):
         return event['state']
 
     def __len__(self):
-        return len(self.events) - 1
+        return max(len(self.events) - 1, 0)
 
     def __iter__(self):
         return self
@@ -124,6 +124,8 @@ class OfflineEvaluator(object):
         for i, disp_evaluator in enumerate(self.display_evals):
             print(f"Beginning Display: {disp_evaluator.disp_name}")
             for j in tqdm(range(self.num_iter)):
+                if len(disp_evaluator) == 0:
+                    continue
                 n_step = len(disp_evaluator)
                 s = disp_evaluator.reset()
                 total_reward = 0
