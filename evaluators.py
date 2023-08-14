@@ -101,6 +101,11 @@ class OfflineDisplayPolicyEvaluator(object):
         self._increment()
         return event['state']
 
+    def sample(self):
+        idx = np.random.randint(0, len(self.events))
+        s = self.__getitem__(idx)
+        return s
+
     def __len__(self):
         return max(len(self.events) - 1, 0)
 
@@ -134,7 +139,8 @@ class OfflineEvaluator(object):
                         continue
                     a = policy(s)
                     r, s_prime, true_payoffs, true_action = disp_evaluator.step(a=a)
-                    policy.update(true_action, true_payoffs)
+                    s_rand = disp_evaluator.sample()['state']
+                    policy.update(true_action, true_payoffs, rand_state=s_rand)
                     #print(np.max(list(policy.qcounter.values())))
                     s = s_prime
                     total_reward += r

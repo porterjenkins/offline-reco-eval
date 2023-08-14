@@ -38,7 +38,7 @@ class BasePolicy(object):
 
         return a
 
-    def update(self, action: dict, payoffs: dict):
+    def update(self, action: dict, payoffs: dict, *args, **kwargs):
 
         for prod, rew in payoffs.items():
             if prod not in self.qtable:
@@ -86,7 +86,7 @@ class GeneticPolicy(BasePolicy):
     def dict_to_str(d: dict):
         return json.dumps(d, sort_keys=True)
 
-    def update(self, state: DisplayState, payoffs: dict):
+    def update(self, state: DisplayState, payoffs: dict, *args, **kwargs):
         total_payoff = np.sum(list(payoffs.values()))
 
         state_dict = self.dict_to_str(state)
@@ -165,7 +165,7 @@ class EpsilonGreedy(BasePolicy):
     def dict_to_str(d: dict):
         return json.dumps(d, sort_keys=True)
 
-    def update(self, state: DisplayState, payoffs: dict):
+    def update(self, state: DisplayState, payoffs: dict, *args, **kwargs):
         total_payoff = np.sum(list(payoffs.values()))
 
         state_dict = self.dict_to_str(state)
@@ -252,7 +252,7 @@ class LinearProgramming(BasePolicy):
         BasePolicy.reset(self)
         self.lin_prog_coeff = np.zeros(self.n_products)
 
-    def update(self, action: dict, payoffs: dict):
+    def update(self, action: dict, payoffs: dict, *args, **kwargs):
         BasePolicy.update(self, action, payoffs)
         for k, v in self.qtable.items():
             idx = self.p_to_idx[k]
