@@ -14,7 +14,7 @@ import pickle
 
 from policy.deep_ensemble import GaussianDNN, train_gaussian_dnn, evaluate_gaussian_dnn
 
-tol = 95.0
+tol = 98
 dta = pd.read_csv("../data/fall-msd-treatment.csv")
 dta = dta[dta['payoff'] > 0.0]
 np.percentile(dta['payoff'], q=[tol])
@@ -62,7 +62,7 @@ device = torch.device("cpu")
 
 # Instantiate and train the Gaussian DNN model
 
-num_epochs = 20
+num_epochs = 100
 
 for i in range(5):
     gaussian_dnn_model = GaussianDNN(num_feats=x_values.shape[1]).to(device)
@@ -73,6 +73,6 @@ for i in range(5):
         val_loss = evaluate_gaussian_dnn(val_loader, gaussian_dnn_model, device)
 
         progress_bar.set_postfix({"Train Loss": f"{train_loss:.2f}", "Val Loss": f"{val_loss:.2f}"})
-        torch.save(gaussian_dnn_model.state_dict(), f"../models/ensemble/gauss-dnn-{i}.pt")
+    torch.save(gaussian_dnn_model.state_dict(), f"../models/ensemble/gauss-dnn-{i}.pt")
 
 
