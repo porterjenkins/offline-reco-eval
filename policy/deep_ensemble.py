@@ -26,7 +26,6 @@ class DeepEnsemblePolicy(Bayes3dv):
 
     def __call__(self, state: DisplayState, *args, **kwargs):
 
-
         state_vals, state_sigma = self.estimator(state)
         cand_set = self._generate_candidates(state.get_prod_quantites())
         if cand_set:
