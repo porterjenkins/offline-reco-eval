@@ -3,8 +3,8 @@ import pandas as pd
 from evaluators import OfflineEvaluator
 from policy.policies import GeneticPolicy, RandomPolicy
 
-fpath = "../data/fall-msd-control.csv"
-iter = 100
+fpath = "../data/fall-msd-control_clean.csv"
+iter = 30
 event_thin = 0.5
 df = pd.read_csv(fpath)
 
