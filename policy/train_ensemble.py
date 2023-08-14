@@ -11,8 +11,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 import pickle
 
-
-from policy.deep_ensemble import GaussianDNN, train_gaussian_dnn, evaluate_gaussian_dnn
+from policy.estimators import GaussianDNN, train_gaussian_dnn, evaluate_gaussian_dnn
 
 tol = 98
 dta = pd.read_csv("../data/fall-msd-treatment.csv")
