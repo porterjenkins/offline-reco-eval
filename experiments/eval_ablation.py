@@ -19,7 +19,7 @@ evaluator = OfflineEvaluator.build_from_csv(
     thin=event_thin
 )
 
-policy = NoSearch.build_from_dir(
+policy = NoBayesNoSearch.build_from_dir(
     data_dir="../data",
     event_data_fpath=fpath,
     eps=eps,
